@@ -18,6 +18,7 @@ export default function RootLayout() {
       >
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="home" options={{ title: '🍳 StepChef', headerBackVisible: false }} />
+        <Stack.Screen name="settings" options={{ title: 'Settings', headerBackTitle: 'Back' }} />
         <Stack.Screen name="add-recipe" options={{ title: 'New Recipe', headerBackTitle: 'Back' }} />
         <Stack.Screen name="recipe/[id]" options={{ title: 'Cooking Mode', headerBackTitle: 'Back' }} />
       </Stack>

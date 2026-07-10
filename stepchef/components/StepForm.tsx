@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StepInput } from '../utils/types';
 import { formatTime } from '../utils/timeUtils';
 
@@ -19,10 +20,11 @@ type StepFormProps = {
   onCancel: () => void;
 };
 
-const SCALES = ['tablespoon', 'teaspoon', 'ml', 'cup', 'liter', 'gram', 'kg', 'oz'];
+const STORAGE_KEY = '@stepchef_custom_scales';
+const DEFAULT_SCALES = ['tablespoon', 'teaspoon', 'ml', 'cup', 'liter', 'gram', 'kg', 'oz'];
 
 const StepForm = ({ stepNumber, onSave, onCancel }: StepFormProps) => {
-  const now = new Date().toISOString();
+  const [scales, setScales] = useState<string[]>(DEFAULT_SCALES);
   const [form, setForm] = useState<StepInput>({
     title: '',
     ingredients: '',
@@ -33,6 +35,25 @@ const StepForm = ({ stepNumber, onSave, onCancel }: StepFormProps) => {
     duration: 0,
     step_order: stepNumber - 1,
   });
+
+  useEffect(() => {
+    loadScales();
+  }, []);
+
+  const loadScales = async () => {
+    try {
+      const stored = await AsyncStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored) as string[];
+        setScales(parsed);
+        if (parsed.length > 0) {
+          setForm(f => ({ ...f, scale: parsed[0] }));
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load custom scales in StepForm:', e);
+    }
+  };
 
   const handleStart = () => {
     const now = new Date().toISOString();
@@ -111,7 +132,7 @@ const StepForm = ({ stepNumber, onSave, onCancel }: StepFormProps) => {
               onValueChange={v => setForm(f => ({ ...f, scale: v }))}
               style={styles.picker}
             >
-              {SCALES.map(s => (
+              {scales.map(s => (
                 <Picker.Item key={s} label={s.charAt(0).toUpperCase() + s.slice(1)} value={s} />
               ))}
             </Picker>
@@ -121,7 +142,7 @@ const StepForm = ({ stepNumber, onSave, onCancel }: StepFormProps) => {
 
       {/* Timing */}
       <View style={styles.field}>
-        <Text style={styles.label}>Timing (optional)</Text>
+        <Text style={styles.label}>Timing (stopwatch)</Text>
         <View style={styles.timeRow}>
           <View style={styles.timeDisplay}>
             <Ionicons name="time-outline" size={14} color="#6B7280" style={{ marginRight: 4 }} />
@@ -144,11 +165,23 @@ const StepForm = ({ stepNumber, onSave, onCancel }: StepFormProps) => {
             <Text style={styles.timeBtnText}>End</Text>
           </TouchableOpacity>
         </View>
-        {form.duration > 0 && (
-          <Text style={styles.duration}>
-            ⏱ Duration: {form.duration.toFixed(1)} min
-          </Text>
-        )}
+      </View>
+
+      {/* Duration Input */}
+      <View style={styles.field}>
+        <Text style={styles.label}>Duration (minutes)</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter step duration in minutes"
+          value={form.duration ? String(form.duration) : ''}
+          onChangeText={t => {
+            const clean = t.replace(/[^0-9.]/g, '');
+            const parsed = parseFloat(clean) || 0;
+            setForm(f => ({ ...f, duration: parsed }));
+          }}
+          keyboardType="numeric"
+          placeholderTextColor="#9CA3AF"
+        />
       </View>
 
       {/* Buttons */}

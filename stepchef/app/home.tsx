@@ -9,7 +9,7 @@ import {
   RefreshControl,
   Alert,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useNavigation } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -22,6 +22,7 @@ const CATEGORIES = ['All', 'Main Course', 'Appetizer', 'Dessert', 'Beverage', 'S
 
 export default function HomeScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
   const insets = useSafeAreaInsets();
 
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -44,10 +45,21 @@ export default function HomeScreen() {
   }, []);
 
   useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity
+          onPress={() => router.push('/settings')}
+          style={{ marginRight: 15 }}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="settings-outline" size={22} color="#fff" />
+        </TouchableOpacity>
+      ),
+    });
     loadRecipes();
     const clock = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(clock);
-  }, []);
+  }, [navigation, loadRecipes]);
 
   const handleDelete = (id: string) => {
     Alert.alert('Delete Recipe', 'Are you sure you want to delete this recipe?', [
