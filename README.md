@@ -1,1 +1,0 @@
-# StepChef-Android-application
